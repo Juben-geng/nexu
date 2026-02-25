@@ -8,3 +8,7 @@ dist/
 coverage/
 .turbo/
 tmp/
+*.db
+*.db-shm
+*.db-wal
+openapi-ts-error-*.log

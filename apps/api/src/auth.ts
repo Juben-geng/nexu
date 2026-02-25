@@ -6,6 +6,7 @@ const databaseUrl = process.env.DATABASE_URL ?? "file:./nexu.db";
 const dbPath = databaseUrl.replace(/^file:/, "");
 
 const options: BetterAuthOptions = {
+  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: new Database(dbPath),
   emailAndPassword: {
     enabled: true,

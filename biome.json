@@ -28,6 +28,13 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "apps/web/lib/api", "*.gen.ts", "*.d.ts"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      "apps/web/lib/api",
+      "*.gen.ts",
+      "*.d.ts",
+      "openapi.json"
+    ]
   }
 }
