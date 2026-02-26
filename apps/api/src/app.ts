@@ -11,6 +11,7 @@ import {
 import { registerInviteRoutes } from "./routes/invite-routes.js";
 import { registerModelRoutes } from "./routes/model-routes.js";
 import { registerPoolRoutes } from "./routes/pool-routes.js";
+import { registerSlackEvents } from "./routes/slack-events.js";
 
 import type { AppBindings } from "./types.js";
 
@@ -28,6 +29,7 @@ export function createApp() {
 
   registerAuthRoutes(app);
   registerSlackOAuthCallback(app);
+  registerSlackEvents(app);
 
   app.use("/v1/*", authMiddleware);
 

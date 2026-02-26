@@ -666,16 +666,14 @@ export function registerSlackOAuthCallback(app: OpenAPIHono<AppBindings>) {
         },
       ]);
 
-      if (bot.poolId) {
-        await db.insert(webhookRoutes).values({
-          id: createId(),
-          channelType: "slack",
-          externalId: teamId,
-          poolId: bot.poolId,
-          botChannelId: channelId,
-          createdAt: now,
-        });
-      }
+      await db.insert(webhookRoutes).values({
+        id: createId(),
+        channelType: "slack",
+        externalId: teamId,
+        poolId: bot.poolId ?? "unassigned",
+        botChannelId: channelId,
+        createdAt: now,
+      });
     }
 
     // --- 7. Cleanup expired states (opportunistic) ---
