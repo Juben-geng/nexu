@@ -4,20 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "NODE_OPTIONS=--conditions=development tsx watch src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "generate-openapi": "tsx scripts/generate-openapi.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx src/db/seed-dev.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.8",
     "@hono/zod-openapi": "^0.18.4",
     "@paralleldrive/cuid2": "^2.2.2",
     "better-auth": "^1.2.7",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.6.1",
     "drizzle-orm": "^0.41.0",
     "hono": "^4.7.5",
     "pg": "^8.13.1",

@@ -1,6 +1,10 @@
 # Local Slack Testing Guide
 
-How to receive Slack event callbacks on your local machine and optionally run a Gateway for end-to-end AI responses.
+How to receive Slack event callbacks on your local machine and run a Gateway for end-to-end AI responses.
+
+Related guide:
+
+- `docs/guides/local-runtime-sidecar.md` — 中文版，本地 sidecar + 本地 OpenClaw 联调说明（推荐和本篇配合使用）
 
 ## Architecture
 
@@ -15,35 +19,32 @@ Slack Events API ─→ cloudflared tunnel ─→ Nexu API (:3000)
                                                   └─ reply via Slack API
 ```
 
-## Prerequisites
+## Two Setup Paths
 
-- Docker (for PostgreSQL)
-- pnpm 9+
-- Node 20+ (Node 22+ required for Gateway)
-- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) (`brew install cloudflared`)
-- A Slack workspace where you have admin access
-- (Optional) [OpenClaw](https://github.com/openclaw/openclaw) repo cloned locally — for running Gateway
+| | pnpm dev (推荐开发) | Docker Compose 全栈 |
+|---|---|---|
+| 适用场景 | 日常开发、调试、热重载 | 快速体验、E2E 验证、部署预演 |
+| API + Web | `pnpm dev`（热重载） | Docker 容器 |
+| Postgres | Docker 容器 | Docker 容器 |
+| Gateway | Docker 容器 或 手动源码启动 | Docker 容器 |
+| Node 要求 | Node 20+（Gateway 源码需 22+） | 仅需 Docker |
 
-## Part 1: API + Slack Events
+---
 
-### 1. Start Database
+## Common Setup: Slack App
 
-```bash
-docker compose up -d
-```
+不论选哪条路径，都需要先创建 Slack App。
 
-This starts PostgreSQL on port 5433. Tables are auto-migrated on API startup.
-
-### 2. Create a Slack App
+### 1. Create a Slack App
 
 1. Go to https://api.slack.com/apps → **Create New App** → **From scratch**
 2. Name it anything (e.g. "Nexu Dev"), pick your workspace
 3. Note down from **Basic Information**:
    - **Signing Secret**
-4. Note down from **Settings → Install App** (or after OAuth):
-   - The Client ID and Client Secret are in **Basic Information** → **App Credentials**
+4. Note down from **Basic Information** → **App Credentials**:
+   - **Client ID** and **Client Secret**
 
-#### Bot Token Scopes
+### 2. Bot Token Scopes
 
 Go to **OAuth & Permissions** → **Scopes** → **Bot Token Scopes**, add:
 
@@ -74,30 +75,7 @@ https://some-random-words.trycloudflare.com
 
 > **Note:** This URL changes every time you restart cloudflared. You'll need to update Slack App settings accordingly.
 
-### 4. Configure Environment
-
-Copy `.env.example` and fill in:
-
-```bash
-cp apps/api/.env.example apps/api/.env
-```
-
-```env
-DATABASE_URL=postgresql://nexu:nexu@localhost:5433/nexu_dev
-BETTER_AUTH_SECRET=nexu-dev-secret-change-in-production
-BETTER_AUTH_URL=https://<your-tunnel>.trycloudflare.com
-ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-SLACK_CLIENT_ID=<from Slack App>
-SLACK_CLIENT_SECRET=<from Slack App>
-SLACK_SIGNING_SECRET=<from Slack App>
-GATEWAY_TOKEN=gw-secret-token
-PORT=3000
-WEB_URL=http://localhost:5173
-```
-
-**Important:** `BETTER_AUTH_URL` must be the cloudflared tunnel URL (HTTPS).
-
-### 5. Configure Slack App URLs
+### 4. Configure Slack App URLs
 
 #### OAuth Redirect URL
 
@@ -114,7 +92,7 @@ Click **Add** then **Save URLs**.
 https://<your-tunnel>.trycloudflare.com/api/slack/events
 ```
 
-Slack will send a `url_verification` challenge. If the API is running, it should show **Verified** automatically.
+Slack will send a `url_verification` challenge. It will show **Verified** once the API is running (step 5 or 6 below).
 
 **Subscribe to bot events** → Add:
 - `app_mention` — triggers when someone @mentions your bot
@@ -122,150 +100,130 @@ Slack will send a `url_verification` challenge. If the API is running, it should
 
 Click **Save Changes**.
 
-### 6. Start Dev Server
-
-```bash
-pnpm dev
-```
-
-This starts:
-- API on `http://localhost:3000`
-- Web on `http://localhost:5173`
-
-### 7. Create a Test Account
-
-1. Open `http://localhost:5173` in your browser
-2. Use invite code `NEXU2026` to register
-3. A default bot needs to exist — create one via DB if needed:
-
-```sql
--- Connect to: postgresql://nexu:nexu@localhost:5433/nexu_dev
-INSERT INTO bots (id, user_id, name, slug, system_prompt, created_at, updated_at)
-VALUES (
-  'bot_dev_01',
-  '<your-user-id-from-user-table>',
-  'Dev Bot',
-  'dev-bot',
-  'You are a helpful assistant.',
-  NOW()::text,
-  NOW()::text
-);
-```
-
-### 8. Connect Slack via OAuth
-
-1. Go to **Channels** page in the web UI
-2. Click **Add to Slack**
-3. Authorize in Slack
-4. You should see "Connected" status
-
-### 9. Test Events (API Only)
-
-In your Slack workspace:
-- **@mention the bot** in a channel (after inviting it with `/invite @BotName`)
-- **DM the bot** directly (find it under Apps in the sidebar)
-
-You should see in the API logs:
-```
-[slack-events] team=T12345 event=app_mention (no gateway pod — logged only)
-[slack-events] payload: { ... }
-```
-
-At this point, the API receives and logs events but the bot can't respond without a Gateway.
-
 ---
 
-## Part 2: Gateway (End-to-End AI Responses)
+## Path A: pnpm dev (Recommended for Development)
 
-To make the bot actually respond, you need to run an OpenClaw Gateway locally.
-
-> **本地开发模式说明：** Gateway 直接从 OpenClaw 源码仓库 `dist/index.js` 启动，通过 `OPENCLAW_CONFIG_PATH` 指向 Nexu API 动态生成的配置文件。DB 中 `pod_ip=127.0.0.1` 使事件在本机内转发。配置变更后需手动重新生成并重启 Gateway。线上部署的区别见文末 [Local vs Production](#local-vs-production) 部分。
+热重载、可断点调试、改代码即时生效。
 
 ### Prerequisites
 
-- Node 22+ (`nvm install 22 && nvm use 22`) — **Gateway 强制要求 22.12.0+**，dev server 可用 Node 20
-- OpenClaw repo cloned: `git clone https://github.com/openclaw/openclaw.git && cd openclaw && pnpm install && pnpm build`
-- LiteLLM proxy 或其他 OpenAI-compatible API endpoint
+- Docker (for PostgreSQL)
+- pnpm 9+
+- Node 20+ (Node 22+ required if running Gateway from source)
+- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) (`brew install cloudflared`)
 
-### 1. Set Up a Gateway Pool
+### 5a. Start Database
 
-Create a gateway pool record and link your bot to it:
-
-```sql
--- Connect to: postgresql://nexu:nexu@localhost:5433/nexu_dev
-
--- Create gateway pool (pointing to localhost)
-INSERT INTO gateway_pools (id, name, pod_ip, status, created_at)
-VALUES ('pool_local_01', 'local-dev', '127.0.0.1', 'active', NOW()::text);
-
--- Assign bot to pool
-UPDATE bots SET pool_id = 'pool_local_01' WHERE id = '<your-bot-id>';
-
--- Verify webhook_routes has pool assignment
-UPDATE webhook_routes SET pool_id = 'pool_local_01' WHERE channel_type = 'slack';
+```bash
+docker compose up postgres -d
 ```
 
-### 2. Configure LiteLLM Provider
+This starts PostgreSQL on port 5433. Tables are auto-migrated on API startup.
 
-Config 生成器通过环境变量配置 LiteLLM。在 `apps/api/.env` 中添加：
+### 6a. Configure Environment
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+Fill in `apps/api/.env`:
 
 ```env
+DATABASE_URL=postgresql://nexu:nexu@localhost:5433/nexu_dev
+BETTER_AUTH_SECRET=nexu-dev-secret-change-in-production
+BETTER_AUTH_URL=https://<your-tunnel>.trycloudflare.com
+ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+SLACK_CLIENT_ID=<from Slack App>
+SLACK_CLIENT_SECRET=<from Slack App>
+SLACK_SIGNING_SECRET=<from Slack App>
+GATEWAY_TOKEN=gw-secret-token
+PORT=3000
+WEB_URL=http://localhost:5173
+
+# AI responses (optional — bot won't reply without these)
 LITELLM_BASE_URL=https://litellm.example.com
 LITELLM_API_KEY=sk-your-key
 ```
 
-**重要：** 设好后需重启 dev server（或 `touch apps/api/src/index.ts` 让 tsx watch 重新加载）。
+**Important:** `BETTER_AUTH_URL` must be the cloudflared tunnel URL (HTTPS).
 
-确认你的 bot 使用的 `model_id` 在 LiteLLM 上可用：
+### 7a. Build and Start Dev Server
+
+首次启动需要先构建 shared 包：
 
 ```bash
-# 查看可用模型
-curl -s $LITELLM_BASE_URL/v1/models -H "Authorization: Bearer $LITELLM_API_KEY" \
-  | python3 -c "import sys,json; [print(m['id']) for m in json.load(sys.stdin)['data']]"
-
-# 更新 bot 的 model_id（必须与上面列表中的某个匹配）
-psql "postgresql://nexu:nexu@localhost:5433/nexu_dev" \
-  -c "UPDATE bots SET model_id = 'anthropic/claude-sonnet-4' WHERE slug = 'my-bot';"
+pnpm build          # 构建 shared + api（首次必须，后续 tsx watch 自动处理）
+pnpm dev
 ```
 
-### 3. Generate Gateway Config
+This starts:
+- API on `http://localhost:3000` (with hot reload)
+- Web on `http://localhost:5173` (Vite HMR)
 
-API 从数据库动态生成配置（含 LiteLLM provider、Slack credentials、policy 设置）：
+### 8a. Seed Dev Data
+
+Dev server 不会自动 seed（`AUTO_SEED` 仅在 Docker 全栈模式下开启）。用 seed 命令创建 pool + invite code：
 
 ```bash
+pnpm seed
+```
+
+这会创建 `pool_local_01`（`pod_ip=127.0.0.1`）和 invite code `NEXU2026`。幂等，可重复运行。
+
+### 9a. Register and Connect Slack
+
+1. Open `http://localhost:5173`
+2. Register with invite code **NEXU2026**
+3. Create a bot (configure model, system prompt)
+4. Go to **Channels** → **Add to Slack** → Authorize
+5. You should see "Connected" status
+
+### 10a. Start Gateway
+
+Bot 需要 Gateway 才能实际回复消息。两种方式：
+
+#### Option 1: Docker Gateway (推荐)
+
+最简单 — 不需要克隆 OpenClaw 仓库：
+
+```bash
+NEXU_API_URL=http://host.docker.internal:3000 docker compose up gateway -d
+```
+
+说明：
+- `NEXU_API_URL` 覆盖默认值，让 Docker 容器内的 Gateway 通过 `host.docker.internal` 访问宿主机上的 API
+- `docker-compose.yml` 默认设置 `POD_IP=127.0.0.1`，API 会通过 `127.0.0.1:18789`（端口映射）将事件转发到 Gateway
+- 首次启动需要 build 镜像，加 `--build` 参数：`NEXU_API_URL=http://host.docker.internal:3000 docker compose up gateway -d --build`
+
+> macOS/Windows 上 `host.docker.internal` 自动可用。Linux 需加 `--add-host=host.docker.internal:host-gateway` 或使用宿主机实际 IP。
+
+#### Option 2: 源码启动 (适合调试 OpenClaw)
+
+需要 Node 22+ 和 OpenClaw 仓库：
+
+```bash
+git clone https://github.com/openclaw/openclaw.git
+cd openclaw && pnpm install && pnpm build
+```
+
+先将 bot 关联到 pool：
+
+```sql
+UPDATE bots SET pool_id = 'pool_local_01' WHERE slug = '<your-bot-slug>';
+UPDATE webhook_routes SET pool_id = 'pool_local_01' WHERE channel_type = 'slack';
+```
+
+生成配置并启动：
+
+```bash
+# 生成配置
 curl -s http://localhost:3000/api/internal/pools/pool_local_01/config \
   -H "Authorization: Bearer gw-secret-token" \
   | python3 -m json.tool > gateway-config.json
-```
 
-验证关键字段：
-```bash
-# 应该看到 litellm/ 前缀
-python3 -c "import json; d=json.load(open('gateway-config.json')); print('model:', d['agents']['defaults']['model']['primary'])"
-# → model: litellm/anthropic/claude-sonnet-4
-
-# 应该看到 models.providers.litellm
-python3 -c "import json; d=json.load(open('gateway-config.json')); print('has models:', 'models' in d)"
-# → has models: True
-
-# 应该看到 groupPolicy: open
-python3 -c "import json; d=json.load(open('gateway-config.json')); print('groupPolicy:', d['channels']['slack']['groupPolicy'])"
-# → groupPolicy: open
-```
-
-如果 `has models: False`，说明环境变量没生效 — 检查 `.env` 是否有 `LITELLM_BASE_URL` 和 `LITELLM_API_KEY`，重启 dev server。
-
-### 4. Start Gateway
-
-```bash
-# 切换到 Node 22（Gateway 强制要求）
-nvm use 22
-
-# 进入 OpenClaw 目录
-cd /path/to/openclaw
-
-# 启动 Gateway
-OPENCLAW_CONFIG_PATH=/path/to/gateway-config.json \
+# 启动 Gateway (Node 22+)
+OPENCLAW_CONFIG_PATH=$(pwd)/gateway-config.json \
   node dist/index.js gateway run --bind loopback --port 18789 --force --verbose
 ```
 
@@ -273,31 +231,108 @@ OPENCLAW_CONFIG_PATH=/path/to/gateway-config.json \
 ```
 [gateway] agent model: litellm/anthropic/claude-sonnet-4
 [gateway] listening on ws://127.0.0.1:18789 (PID xxxxx)
-[slack] [slack-t123] starting provider
 [slack] http mode listening at /slack/events/slack-T123
 ```
 
 > **关键注意事项：**
 > - 环境变量是 `OPENCLAW_CONFIG_PATH`（不是 `OPENCLAW_CONFIG`）
 > - 入口是 `dist/index.js`（需先 `pnpm build`），不是 chunk 文件
-> - `--verbose` 加上有助于调试，可以看到每条消息的处理过程
-> - `--force` 跳过端口占用检查
+> - `--verbose` 有助于调试，可以看到每条消息的处理过程
+> - 配置变更后需重新生成 config 并重启 Gateway
 
-### 5. Test End-to-End
+### 11a. Test End-to-End
 
 1. In Slack, @mention your bot or DM it
-2. Watch the API logs for event forwarding:
+2. Watch the API logs:
    ```
    [slack-events] forwarding to http://127.0.0.1:18789/slack/events/slack-T123
    [slack-events] gateway responded: status=200
    ```
-3. Watch the Gateway logs for AI processing:
+3. Watch the Gateway logs:
    ```
    [agent/embedded] embedded run start: provider=litellm model=anthropic/claude-sonnet-4
    [agent/embedded] embedded run agent end: isError=false
    slack: delivered 1 reply to channel:C123
    ```
 4. The bot should reply in Slack!
+
+---
+
+## Path B: Docker Compose Full Stack
+
+一条命令启动所有服务，无需安装 pnpm/Node。适合快速体验和部署预演。
+
+### Prerequisites
+
+- Docker and Docker Compose v2+
+- [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/) (`brew install cloudflared`)
+
+### 5b. Configure Environment
+
+```bash
+cp apps/api/.env.example apps/api/.env
+```
+
+Fill in `apps/api/.env` (same as Path A, but `WEB_URL` points to Docker web):
+
+```env
+# DATABASE_URL 会被 docker-compose.yml 覆盖为 postgres:5432，此处值仅供参考
+DATABASE_URL=postgresql://nexu:nexu@localhost:5433/nexu_dev
+BETTER_AUTH_SECRET=nexu-dev-secret-change-in-production
+BETTER_AUTH_URL=https://<your-tunnel>.trycloudflare.com
+ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+SLACK_CLIENT_ID=<from Slack App>
+SLACK_CLIENT_SECRET=<from Slack App>
+SLACK_SIGNING_SECRET=<from Slack App>
+GATEWAY_TOKEN=gw-secret-token
+PORT=3000
+WEB_URL=http://localhost:8080
+LITELLM_BASE_URL=https://litellm.example.com
+LITELLM_API_KEY=sk-your-key
+```
+
+### 6b. Start All Services
+
+```bash
+POD_IP=gateway docker compose --profile full up --build
+```
+
+说明：
+- `--profile full` 启动 api 和 web 服务（它们配置了 `profiles: ["full"]`）
+- `POD_IP=gateway` 让 Gateway 注册 Docker DNS 名而非容器内部 IP，使得 Docker 内的 API 可通过 `gateway:18789` 转发事件
+
+This starts:
+
+| Service  | Host Port | Description |
+|----------|-----------|-------------|
+| postgres | 5433      | PostgreSQL 16 |
+| api      | 3000      | Nexu API (auto-migrates + seeds dev data) |
+| web      | 8080      | Web UI (nginx) |
+| gateway  | 18789     | OpenClaw Gateway |
+
+API 启动时自动 seed `pool_local_01`（`pod_ip=gateway`）+ invite code `NEXU2026`。Gateway 等 API 健康后自动拉取配置并启动。
+
+### 7b. Verify
+
+```bash
+# API
+curl http://localhost:3000/health
+
+# Web
+open http://localhost:8080
+
+# Gateway
+docker compose logs gateway
+# Should show: "Config fetched successfully" + "Starting OpenClaw gateway"
+```
+
+### 8b. Register and Test
+
+1. Open `http://localhost:8080`
+2. Register with invite code **NEXU2026**
+3. Create a bot → Connect Slack → Test in Slack
+
+> **代码变更需重新构建：** `POD_IP=gateway docker compose --profile full up --build` 重新打镜像。日常开发建议用 [Path A](#path-a-pnpm-dev-recommended-for-development)。
 
 ---
 
@@ -309,7 +344,7 @@ If you restarted cloudflared, update these three places:
 2. Slack App → **OAuth & Permissions** → **Redirect URLs**
 3. Slack App → **Event Subscriptions** → **Request URL**
 
-Then restart the dev server (`pnpm dev`).
+Then restart: `pnpm dev` (Path A) or `docker compose --profile full restart api` (Path B).
 
 ### "Add to Slack" button is disabled
 The `bots` table is empty or the bot belongs to a different user. Check with:
@@ -327,7 +362,7 @@ FROM bots b JOIN "user" u ON b.user_id = u.id;
 - If empty, disconnect and re-connect Slack via the UI
 
 ### Events arrive but Gateway gets 405 "Method Not Allowed"
-The Gateway's Slack webhook handler is not registered. Check these in order:
+The Gateway's Slack webhook handler is not registered. Check in order:
 
 1. Gateway logs should show `[slack] http mode listening at /slack/events/<accountId>` on startup
 2. The generated config must have `channels.slack.accounts.<id>.mode` set to `"http"`
@@ -341,6 +376,7 @@ The Gateway's Slack webhook handler is not registered. Check these in order:
 
 ### Gateway "requires Node >=22.12.0"
 - Gateway 强制要求 Node 22+，用 `nvm use 22` 切换
+- Docker 方式不需要关心（镜像自带 Node 22）
 - Nexu API dev server 可以用 Node 20
 
 ### Bot 收到消息但不回复（无错误日志）
@@ -379,6 +415,27 @@ slack: drop message (channel not allowed)
 - 检查：`curl -s $LITELLM_BASE_URL/v1/models -H "Authorization: Bearer $LITELLM_API_KEY"`
 - 常见错误：数据库里的 `model_id` 是旧的或不存在的模型名
 
+### Events arrive but bot doesn't reply (API logs show forwarding error)
+
+API 日志显示 `Failed to forward to gateway` 或 `ECONNREFUSED`：
+
+```
+[slack-events] forwarding to http://172.21.0.3:18789/slack/events/slack-T123
+[slack-events] Failed to forward to gateway: TypeError: fetch failed
+```
+
+**原因：`pod_ip` 是 Docker 容器内部 IP，macOS 宿主机无法访问。**
+
+`gateway-entrypoint.sh` 启动时用 `hostname -i` 注册了容器 IP（如 `172.21.0.3`），macOS 上这个 IP 不可路由。
+
+**修复：**
+```sql
+-- pnpm dev 模式（API 在宿主机，Gateway 端口映射到 127.0.0.1:18789）
+UPDATE gateway_pools SET pod_ip = '127.0.0.1' WHERE id = 'pool_local_01';
+```
+
+防止 Gateway 重启后覆盖：确保 `docker-compose.yml` 中 `POD_IP` 设置正确（默认 `127.0.0.1`）。
+
 ### API 转发时 "Invalid JSON"
 - Hono 框架可能在 middleware 中已消费了 request body
 - `slack-events.ts` 使用 `c.req.text()` 读取 body，带有 fallback 到 `IncomingMessage`
@@ -388,46 +445,13 @@ slack: drop message (channel not allowed)
 
 ## Local vs Production
 
-| 维度 | 本地开发 | 线上 K8s |
-|------|---------|---------|
-| Gateway 启动 | 手动 `node dist/index.js gateway run` | Pod 容器自动启动 |
-| 配置获取 | 手动 curl 保存文件，`OPENCLAW_CONFIG_PATH` 指向 | Pod 启动时调 `GET /api/internal/pools/{poolId}/config` 拉取 |
-| 配置更新 | 手动重新生成 + 重启 | `reload.mode: "hybrid"` 热加载，或 API 触发 |
-| Pod IP | `127.0.0.1` 硬编码 | K8s 分配，写入 `gateway_pools.pod_ip` |
-| 入口流量 | cloudflared 隧道 | K8s Ingress / Load Balancer |
-| Node 版本 | `nvm use 22` 手动切 | Docker 镜像固定 Node 22+ |
-| 秘钥管理 | `.env` 文件 | K8s Secrets 注入 |
+| 维度 | 本地开发 (pnpm dev) | Docker Compose | 线上 K8s |
+|------|---------------------|----------------|---------|
+| API + Web | `pnpm dev` 热重载 | Docker 容器 | Docker 容器 |
+| Gateway | Docker 或源码 | Docker 容器 | Pod + Sidecar |
+| 配置获取 | 手动 curl（源码）/ 自动（Docker） | 自动 | 自动 + 热加载 |
+| Pod IP | `127.0.0.1` | `gateway`（Docker DNS） | K8s 分配 |
+| 入口流量 | cloudflared 隧道 | cloudflared 隧道 | Ingress / LB |
+| 秘钥管理 | `.env` 文件 | `.env` 文件 | K8s Secrets |
 
-### 上线需要改什么
-
-总结：需要把 Gateway 容器化并实现启动时自动拉配置 + 注册 Pod IP，将 Slack 入口域名和秘钥迁移到 K8s Ingress/Secrets，实现 Config Sync Sidecar 完成配置变更通知链路（Gateway 的 chokidar 文件监听已内置，Sidecar 监听 Redis PubSub 后拉配置写文件即可触发热加载），以及将 Gateway 网络绑定从 loopback 改为 lan 以接受跨 Pod 流量。
-
-1. **Gateway Docker 镜像** — 基于 OpenClaw 构建，启动脚本在 entrypoint 中调用 Nexu API 拉取配置：
-   ```bash
-   # entrypoint.sh 示意
-   curl -s http://nexu-api:3000/api/internal/pools/$POOL_ID/config \
-     -H "Authorization: Bearer $GATEWAY_TOKEN" \
-     -o /app/config.json
-   OPENCLAW_CONFIG_PATH=/app/config.json node dist/index.js gateway run --bind lan --port 18789
-   ```
-
-2. **Pod IP 注册** — Pod 启动后需将自身 IP 写回 `gateway_pools.pod_ip`（通过 K8s downward API 或启动脚本调 Nexu API）
-
-3. **Config Sync Sidecar** — Gateway 的 chokidar 文件监听已内置，不需要改 Gateway 代码。需要实现一个 Sidecar 容器（设计文档：`docs/designs/openclaw-multi-tenant.md`），职责：
-   - 监听 Redis PubSub 的配置变更通知
-   - 调 `GET /api/internal/pools/{poolId}/config` 拉最新配置
-   - 原子写入共享卷 `/etc/openclaw/config.json`（写 temp 文件再 rename）
-   - Gateway chokidar 自动检测到文件变更并热加载，零重启
-
-4. **Slack Event Subscriptions URL** — 从 cloudflared 隧道改为正式域名：
-   ```
-   https://api.nexu.example.com/api/slack/events
-   ```
-
-5. **环境变量** — `.env` 中的秘钥改为 K8s Secrets：
-   - `LITELLM_BASE_URL` / `LITELLM_API_KEY` → Secret
-   - `GATEWAY_TOKEN` → Secret
-   - `ENCRYPTION_KEY` → Secret
-   - `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` → Secret
-
-6. **`gateway.bind`** — 从 `"loopback"` 改为 `"lan"`。loopback 只绑 `127.0.0.1`，K8s 中 API Pod 和 Gateway Pod 是不同 IP，需要 `lan`（绑 `0.0.0.0`）才能接受跨 Pod 的事件转发请求
+K8s 部署详见 [Docker 部署指南](docker-deployment.md) 和 `deploy/k8s/README.md`。

@@ -1,12 +1,14 @@
 import crypto from "node:crypto";
 import type { IncomingMessage } from "node:http";
 import type { OpenAPIHono } from "@hono/zod-openapi";
-import { and, eq } from "drizzle-orm";
+import { createId } from "@paralleldrive/cuid2";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import {
   botChannels,
   channelCredentials,
   gatewayPools,
+  sessions,
   webhookRoutes,
 } from "../db/schema/index.js";
 import { decrypt } from "../lib/crypto.js";
@@ -108,9 +110,7 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
         );
 
       if (!route) {
-        console.warn(
-          `[slack-events] No webhook route for team_id=${teamId}`,
-        );
+        console.warn(`[slack-events] No webhook route for team_id=${teamId}`);
         return c.json({ error: "Unknown workspace" }, 404);
       }
 
@@ -143,22 +143,122 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
         return c.json({ error: "Missing Slack signature headers" }, 401);
       }
 
-      if (
-        !verifySlackSignature(signingSecret, timestamp, rawBody, signature)
-      ) {
+      if (!verifySlackSignature(signingSecret, timestamp, rawBody, signature)) {
         console.warn(
           `[slack-events] Signature mismatch: ts=${timestamp} sig=${signature.slice(0, 20)}...`,
         );
         return c.json({ error: "Invalid signature" }, 401);
       }
 
-      // Find the gateway pod
+      // Find the gateway pod + botId
       const [channel] = await db
-        .select({ accountId: botChannels.accountId })
+        .select({
+          accountId: botChannels.accountId,
+          botId: botChannels.botId,
+        })
         .from(botChannels)
         .where(eq(botChannels.id, route.botChannelId));
 
       const accountId = channel?.accountId ?? `slack-${teamId}`;
+
+      // Upsert session for message events (fire-and-forget)
+      const event = payload.event as Record<string, unknown> | undefined;
+      const isMessageEvent =
+        event?.type === "message" || event?.type === "app_mention";
+      if (isMessageEvent && channel?.botId && event?.channel) {
+        const channelId = event.channel as string;
+        const sessionKey = `slack_${teamId}_${channelId}`;
+        const now = new Date().toISOString();
+
+        // Resolve Slack channel name via bot token (best-effort)
+        let channelName = channelId;
+        const [botTokenRow] = await db
+          .select({ encryptedValue: channelCredentials.encryptedValue })
+          .from(channelCredentials)
+          .where(
+            and(
+              eq(channelCredentials.botChannelId, route.botChannelId),
+              eq(channelCredentials.credentialType, "botToken"),
+            ),
+          );
+        if (botTokenRow) {
+          try {
+            const botToken = decrypt(botTokenRow.encryptedValue);
+            const infoResp = await fetch(
+              `https://slack.com/api/conversations.info?channel=${channelId}`,
+              { headers: { Authorization: `Bearer ${botToken}` } },
+            );
+            const infoData = (await infoResp.json()) as {
+              ok: boolean;
+              channel?: { name?: string; is_im?: boolean; user?: string };
+            };
+            if (infoData.ok && infoData.channel) {
+              if (infoData.channel.is_im) {
+                // DM — try to get user display name
+                const userId = infoData.channel.user;
+                if (userId) {
+                  const userResp = await fetch(
+                    `https://slack.com/api/users.info?user=${userId}`,
+                    { headers: { Authorization: `Bearer ${botToken}` } },
+                  );
+                  const userData = (await userResp.json()) as {
+                    ok: boolean;
+                    user?: {
+                      real_name?: string;
+                      profile?: { display_name?: string };
+                    };
+                  };
+                  if (userData.ok && userData.user) {
+                    channelName =
+                      userData.user.profile?.display_name ||
+                      userData.user.real_name ||
+                      channelId;
+                  }
+                }
+              } else {
+                channelName = infoData.channel.name ?? channelId;
+              }
+            }
+          } catch (err) {
+            console.warn("[slack-events] Failed to resolve channel name:", err);
+          }
+        }
+
+        const title =
+          channelName === channelId ? `Slack #${channelId}` : `#${channelName}`;
+
+        db.insert(sessions)
+          .values({
+            id: createId(),
+            botId: channel.botId,
+            sessionKey,
+            channelType: "slack",
+            channelId,
+            title,
+            status: "active",
+            messageCount: 1,
+            lastMessageAt: now,
+            createdAt: now,
+            updatedAt: now,
+          })
+          .onConflictDoUpdate({
+            target: sessions.sessionKey,
+            set: {
+              title,
+              messageCount: sql`${sessions.messageCount} + 1`,
+              lastMessageAt: now,
+              updatedAt: now,
+            },
+          })
+          .then(() =>
+            console.log(
+              `[slack-events] session upserted: ${sessionKey} title="${title}"`,
+            ),
+          )
+          .catch((err) =>
+            console.error("[slack-events] session upsert failed:", err),
+          );
+      }
 
       const [pool] = await db
         .select({ podIp: gatewayPools.podIp })
@@ -169,19 +269,10 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
 
       // Forward to gateway or log locally
       if (!podIp) {
-        const eventType =
-          (payload.event as Record<string, unknown> | undefined)?.type ??
-          "unknown";
-        console.log(
-          `[slack-events] team=${teamId} event=${eventType} (no gateway pod — logged only)`,
+        console.warn(
+          `[slack-events] no active gateway pod for team_id=${teamId} pool_id=${route.poolId}`,
         );
-        if (payload.event) {
-          console.log(
-            "[slack-events] payload:",
-            JSON.stringify(payload.event, null, 2),
-          );
-        }
-        return c.json({ ok: true });
+        return c.json({ accepted: true }, 202);
       }
 
       // Forward to gateway pod
@@ -210,8 +301,12 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
           headers: { "Content-Type": "application/json" },
         });
       } catch (err) {
-        console.error("[slack-events] Failed to forward to gateway:", err);
-        return c.json({ ok: true });
+        console.error("[slack-events] Failed to forward to gateway", {
+          poolId: route.poolId,
+          accountId,
+          error: err instanceof Error ? err.message : "unknown_error",
+        });
+        return c.json({ accepted: true }, 202);
       }
     } catch (err) {
       console.error("[slack-events] Unhandled error:", err);

@@ -9,12 +9,20 @@ const gatewayReloadSchema = z.object({
   mode: z.enum(["off", "hot", "hybrid"]),
 });
 
+const controlUiSchema = z
+  .object({
+    allowedOrigins: z.array(z.string()).optional(),
+    dangerouslyAllowHostHeaderOriginFallback: z.boolean().optional(),
+  })
+  .optional();
+
 const gatewayConfigSchema = z.object({
   port: z.number().default(18789),
   mode: z.literal("local").default("local"),
   bind: z.enum(["loopback", "lan", "auto"]).default("lan"),
   auth: gatewayAuthSchema,
   reload: gatewayReloadSchema.default({ mode: "hybrid" }),
+  controlUi: controlUiSchema,
 });
 
 const agentModelSchema = z.union([
@@ -81,9 +89,11 @@ const bindingSchema = z.object({
 });
 
 // Model provider configuration for LiteLLM / custom endpoints
-const modelCompatSchema = z.object({
-  supportsStore: z.boolean().optional(),
-}).passthrough();
+const modelCompatSchema = z
+  .object({
+    supportsStore: z.boolean().optional(),
+  })
+  .passthrough();
 
 const modelCostSchema = z.object({
   input: z.number(),
@@ -103,24 +113,28 @@ const modelEntrySchema = z.object({
   compat: modelCompatSchema.optional(),
 });
 
-const modelProviderSchema = z.object({
-  baseUrl: z.string(),
-  apiKey: z.string(),
-  api: z.string(),
-  models: z.array(modelEntrySchema),
-}).passthrough();
+const modelProviderSchema = z
+  .object({
+    baseUrl: z.string(),
+    apiKey: z.string(),
+    api: z.string(),
+    models: z.array(modelEntrySchema),
+  })
+  .passthrough();
 
 const modelsConfigSchema = z.object({
   mode: z.enum(["merge", "replace"]).optional(),
   providers: z.record(z.string(), modelProviderSchema),
 });
 
-const commandsConfigSchema = z.object({
-  native: z.enum(["auto", "off"]).optional(),
-  nativeSkills: z.enum(["auto", "off"]).optional(),
-  restart: z.boolean().optional(),
-  ownerDisplay: z.enum(["raw", "friendly"]).optional(),
-}).passthrough();
+const commandsConfigSchema = z
+  .object({
+    native: z.enum(["auto", "off"]).optional(),
+    nativeSkills: z.enum(["auto", "off"]).optional(),
+    restart: z.boolean().optional(),
+    ownerDisplay: z.enum(["raw", "friendly"]).optional(),
+  })
+  .passthrough();
 
 export const openclawConfigSchema = z.object({
   gateway: gatewayConfigSchema,

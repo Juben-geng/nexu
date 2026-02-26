@@ -15,5 +15,51 @@ services:
       timeout: 3s
       retries: 5
 
+  api:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: apps/api/.env
+    environment:
+      DATABASE_URL: postgresql://nexu:nexu@postgres:5432/nexu_dev
+      AUTO_SEED: "true"
+      WEB_URL: http://localhost:8080
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/health').then(r=>{if(!r.ok)throw 1})"]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+  web:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000
+    depends_on:
+      - api
+    ports:
+      - "8080:80"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    environment:
+      NEXU_API_URL: ${NEXU_API_URL:-http://api:3000}
+      POOL_ID: pool_local_01
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN:-gw-secret-token}
+      POD_IP: ${POD_IP:-127.0.0.1}
+    ports:
+      - "18789:18789"
+
 volumes:
   pgdata:

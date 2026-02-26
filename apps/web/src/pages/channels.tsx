@@ -17,35 +17,21 @@ import { useState } from "react";
 import { toast } from "sonner";
 import "@/lib/api";
 import {
-  deleteV1BotsByBotIdChannelsByChannelId,
-  getV1Bots,
-  getV1BotsByBotIdChannels,
-  getV1BotsByBotIdChannelsSlackOauthUrl,
-  postV1BotsByBotIdChannelsSlackConnect,
+  deleteV1ChannelsByChannelId,
+  getV1Channels,
+  getV1ChannelsSlackOauthUrl,
+  postV1ChannelsSlackConnect,
 } from "../../lib/api/sdk.gen";
 
 export function ChannelsPage() {
   const queryClient = useQueryClient();
 
-  const { data: botsData } = useQuery({
-    queryKey: ["bots"],
-    queryFn: async () => {
-      const { data } = await getV1Bots();
-      return data;
-    },
-  });
-
-  const botId = botsData?.bots?.[0]?.id ?? "";
-
   const { data: channelsData, isLoading: channelsLoading } = useQuery({
-    queryKey: ["channels", botId],
+    queryKey: ["channels"],
     queryFn: async () => {
-      const { data } = await getV1BotsByBotIdChannels({
-        path: { botId },
-      });
+      const { data } = await getV1Channels();
       return data;
     },
-    enabled: !!botId,
   });
 
   const channels = channelsData?.channels ?? [];
@@ -67,18 +53,16 @@ export function ChannelsPage() {
         <TabsContent value="slack" className="mt-4">
           {slackChannel ? (
             <SlackConnectedView
-              botId={botId}
               channel={slackChannel}
               queryClient={queryClient}
             />
           ) : (
-            <SlackConnectView botId={botId} queryClient={queryClient} />
+            <SlackConnectView queryClient={queryClient} />
           )}
         </TabsContent>
 
         <TabsContent value="discord" className="mt-4">
           <DiscordSetupView
-            botId={botId}
             channelsLoading={channelsLoading}
             queryClient={queryClient}
           />
@@ -89,10 +73,8 @@ export function ChannelsPage() {
 }
 
 function SlackConnectView({
-  botId,
   queryClient,
 }: {
-  botId: string;
   queryClient: ReturnType<typeof useQueryClient>;
 }) {
   const [manualMode, setManualMode] = useState(false);
@@ -103,8 +85,7 @@ function SlackConnectView({
 
   const connectMutation = useMutation({
     mutationFn: async () => {
-      const { data, error } = await postV1BotsByBotIdChannelsSlackConnect({
-        path: { botId },
+      const { data, error } = await postV1ChannelsSlackConnect({
         body: { teamId, teamName, botToken, signingSecret },
       });
       if (error) throw new Error(error.message);
@@ -122,16 +103,9 @@ function SlackConnectView({
   const [oauthLoading, setOauthLoading] = useState(false);
 
   const handleAddToSlack = async () => {
-    if (!botId) {
-      toast.error("No bot found. Create a bot first.");
-      return;
-    }
-
     setOauthLoading(true);
     try {
-      const { data, error } = await getV1BotsByBotIdChannelsSlackOauthUrl({
-        path: { botId },
-      });
+      const { data, error } = await getV1ChannelsSlackOauthUrl();
 
       if (error) {
         toast.error(error.message ?? "Failed to generate Slack OAuth URL");
@@ -161,7 +135,7 @@ function SlackConnectView({
           <Button
             className="w-full"
             onClick={handleAddToSlack}
-            disabled={oauthLoading || !botId}
+            disabled={oauthLoading}
           >
             {oauthLoading ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -278,11 +252,9 @@ function SlackConnectView({
 }
 
 function SlackConnectedView({
-  botId,
   channel,
   queryClient,
 }: {
-  botId: string;
   channel: {
     id: string;
     accountId: string;
@@ -293,8 +265,8 @@ function SlackConnectedView({
 }) {
   const disconnectMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await deleteV1BotsByBotIdChannelsByChannelId({
-        path: { botId, channelId: channel.id },
+      const { error } = await deleteV1ChannelsByChannelId({
+        path: { channelId: channel.id },
       });
       if (error) throw new Error(error.message);
     },
@@ -338,11 +310,9 @@ function SlackConnectedView({
 }
 
 function DiscordSetupView({
-  botId: _botId,
   channelsLoading: _channelsLoading,
   queryClient: _queryClient,
 }: {
-  botId: string;
   channelsLoading: boolean;
   queryClient: ReturnType<typeof useQueryClient>;
 }) {

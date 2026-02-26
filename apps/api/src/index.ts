@@ -6,6 +6,11 @@ import { migrate } from "./db/migrate.js";
 async function main() {
   await migrate();
 
+  if (process.env.AUTO_SEED === "true") {
+    const { seedDev } = await import("./db/seed-dev.js");
+    await seedDev();
+  }
+
   const app = createApp();
   const port = Number.parseInt(process.env.PORT ?? "3000", 10);
 

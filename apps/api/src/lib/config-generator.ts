@@ -5,7 +5,7 @@ import type {
   SlackAccountConfig,
 } from "@nexu/shared";
 import { openclawConfigSchema } from "@nexu/shared";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import type { Database } from "../db/index.js";
 import {
   botChannels,
@@ -59,7 +59,9 @@ export async function generatePoolConfig(
 
   const poolBots = await db.select().from(bots).where(eq(bots.poolId, poolId));
 
-  const activeBots = poolBots.filter((b) => b.status === "active");
+  const activeBots = poolBots
+    .filter((b) => b.status === "active")
+    .sort((left, right) => left.slug.localeCompare(right.slug));
 
   const channelsWithBots: ChannelWithBot[] = [];
 
@@ -176,12 +178,15 @@ export async function generatePoolConfig(
     gateway: {
       port: 18789,
       mode: "local",
-      bind: "loopback",
+      bind: "lan",
       auth: {
         mode: "token",
         token: gatewayToken ?? process.env.GATEWAY_TOKEN ?? "gw-secret-token",
       },
       reload: { mode: "hybrid" },
+      controlUi: {
+        dangerouslyAllowHostHeaderOriginFallback: true,
+      },
     },
     agents: {
       defaults: {
@@ -194,13 +199,13 @@ export async function generatePoolConfig(
   };
 
   // Add LiteLLM model provider when configured via env vars
-  if (hasLitellm) {
+  if (litellmBaseUrl && litellmApiKey) {
     config.models = {
       mode: "merge",
       providers: {
         litellm: {
-          baseUrl: litellmBaseUrl!,
-          apiKey: litellmApiKey!,
+          baseUrl: litellmBaseUrl,
+          apiKey: litellmApiKey,
           api: "openai-completions",
           models: uniqueModelIds.map((id) => ({
             id,
@@ -241,12 +246,6 @@ export async function generatePoolConfig(
   };
 
   const validated = openclawConfigSchema.parse(config);
-
-  // Increment config version for this pool
-  await db
-    .update(gatewayPools)
-    .set({ configVersion: sql`${gatewayPools.configVersion} + 1` })
-    .where(eq(gatewayPools.id, poolId));
 
   return validated;
 }

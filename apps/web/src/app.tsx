@@ -6,6 +6,7 @@ import { BotConfigPage } from "./pages/bot-config";
 import { ChannelsPage } from "./pages/channels";
 import { InvitePage } from "./pages/invite";
 import { LandingPage } from "./pages/landing";
+import { SessionsPage } from "./pages/sessions";
 import { SlackOAuthCallbackPage } from "./pages/slack-oauth-callback";
 
 export function App() {
@@ -16,7 +17,9 @@ export function App() {
       <Route element={<AuthLayout />}>
         <Route path="/invite" element={<InvitePage />} />
         <Route element={<WorkspaceLayout />}>
-          <Route path="/workspace" element={<ChannelsPage />} />
+          <Route path="/workspace" element={<SessionsPage />} />
+          <Route path="/workspace/sessions" element={<SessionsPage />} />
+          <Route path="/workspace/sessions/:id" element={<SessionsPage />} />
           <Route path="/workspace/channels" element={<ChannelsPage />} />
           <Route path="/workspace/bot" element={<BotConfigPage />} />
           <Route
