@@ -173,6 +173,62 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
         const channelId = event.channel as string;
         const sessionKey = `slack_${teamId}_${channelId}`;
         const now = new Date().toISOString();
+
+        // Resolve Slack channel name via bot token (best-effort)
+        let channelName = channelId;
+        const [botTokenRow] = await db
+          .select({ encryptedValue: channelCredentials.encryptedValue })
+          .from(channelCredentials)
+          .where(
+            and(
+              eq(channelCredentials.botChannelId, route.botChannelId),
+              eq(channelCredentials.credentialType, "botToken"),
+            ),
+          );
+        if (botTokenRow) {
+          try {
+            const botToken = decrypt(botTokenRow.encryptedValue);
+            const infoResp = await fetch(
+              `https://slack.com/api/conversations.info?channel=${channelId}`,
+              { headers: { Authorization: `Bearer ${botToken}` } },
+            );
+            const infoData = (await infoResp.json()) as {
+              ok: boolean;
+              channel?: { name?: string; is_im?: boolean; user?: string };
+            };
+            if (infoData.ok && infoData.channel) {
+              if (infoData.channel.is_im) {
+                // DM — try to get user display name
+                const userId = infoData.channel.user;
+                if (userId) {
+                  const userResp = await fetch(
+                    `https://slack.com/api/users.info?user=${userId}`,
+                    { headers: { Authorization: `Bearer ${botToken}` } },
+                  );
+                  const userData = (await userResp.json()) as {
+                    ok: boolean;
+                    user?: { real_name?: string; profile?: { display_name?: string } };
+                  };
+                  if (userData.ok && userData.user) {
+                    channelName =
+                      userData.user.profile?.display_name ||
+                      userData.user.real_name ||
+                      channelId;
+                  }
+                }
+              } else {
+                channelName = infoData.channel.name ?? channelId;
+              }
+            }
+          } catch (err) {
+            console.warn("[slack-events] Failed to resolve channel name:", err);
+          }
+        }
+
+        const title = channelName === channelId
+          ? `Slack #${channelId}`
+          : `#${channelName}`;
+
         db.insert(sessions)
           .values({
             id: createId(),
@@ -180,7 +236,7 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
             sessionKey,
             channelType: "slack",
             channelId,
-            title: `Slack #${channelId}`,
+            title,
             status: "active",
             messageCount: 1,
             lastMessageAt: now,
@@ -190,13 +246,14 @@ export function registerSlackEvents(app: OpenAPIHono<AppBindings>) {
           .onConflictDoUpdate({
             target: sessions.sessionKey,
             set: {
+              title,
               messageCount: sql`${sessions.messageCount} + 1`,
               lastMessageAt: now,
               updatedAt: now,
             },
           })
           .then(() =>
-            console.log(`[slack-events] session upserted: ${sessionKey}`),
+            console.log(`[slack-events] session upserted: ${sessionKey} title="${title}"`),
           )
           .catch((err) =>
             console.error("[slack-events] session upsert failed:", err),

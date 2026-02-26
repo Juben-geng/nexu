@@ -64,6 +64,7 @@ export function WorkspaceLayout() {
       return data;
     },
     enabled: !!botId,
+    refetchInterval: 5000,
   });
 
   const sessions = sessionsData?.sessions ?? [];
