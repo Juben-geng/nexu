@@ -45,6 +45,12 @@ spec:
                   name: {{ include "nexu.configMapName" . }}
                   key: RUNTIME_POOL_ID
                   optional: true
+            - name: RUNTIME_MANAGE_OPENCLAW_PROCESS
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "nexu.configMapName" . }}
+                  key: RUNTIME_MANAGE_OPENCLAW_PROCESS
+                  optional: true
             - name: RUNTIME_POD_IP
               valueFrom:
                 fieldRef:

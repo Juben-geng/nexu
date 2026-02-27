@@ -49,6 +49,7 @@ const envSchema = z.object({
   RUNTIME_POD_IP: z.string().optional(),
   OPENCLAW_BIN: z.string().min(1).default("openclaw"),
   OPENCLAW_PROFILE: z.string().min(1).optional(),
+  RUNTIME_MANAGE_OPENCLAW_PROCESS: booleanFromEnvSchema.default("false"),
   RUNTIME_GATEWAY_PROBE_ENABLED: booleanFromEnvSchema.default("true"),
   RUNTIME_GATEWAY_CLI_TIMEOUT_MS: z.coerce
     .number()

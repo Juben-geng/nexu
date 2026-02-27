@@ -11,4 +11,5 @@ data:
   WEB_URL: {{ .Values.config.WEB_URL | quote }}
   BETTER_AUTH_URL: {{ .Values.config.BETTER_AUTH_URL | quote }}
   RUNTIME_POOL_ID: {{ .Values.config.RUNTIME_POOL_ID | quote }}
+  RUNTIME_MANAGE_OPENCLAW_PROCESS: {{ .Values.config.RUNTIME_MANAGE_OPENCLAW_PROCESS | quote }}
   NEXU_API_URL: {{ printf "http://%s:%v" (include "nexu.api.fullname" .) .Values.api.service.port | quote }}

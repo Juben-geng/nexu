@@ -8,6 +8,10 @@ import {
   runHeartbeatLoop,
   runPollLoop,
 } from "./loops.js";
+import {
+  startManagedOpenclawGateway,
+  stopManagedOpenclawGateway,
+} from "./openclaw-process.js";
 import { createRuntimeState } from "./state.js";
 import { sleep } from "./utils.js";
 
@@ -98,8 +102,14 @@ async function main(): Promise<void> {
   log("starting gateway", {
     poolId: env.RUNTIME_POOL_ID,
     configPath: env.OPENCLAW_CONFIG_PATH,
+    manageOpenclawProcess: env.RUNTIME_MANAGE_OPENCLAW_PROCESS,
   });
   await fetchInitialConfigWithRetry();
+
+  if (env.RUNTIME_MANAGE_OPENCLAW_PROCESS) {
+    startManagedOpenclawGateway();
+  }
+
   await waitGatewayReady();
   await registerPoolWithRetry();
   log("pool registered", { poolId: env.RUNTIME_POOL_ID });
@@ -110,6 +120,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
+  stopManagedOpenclawGateway();
   console.error("[gateway] fatal error", {
     error: error instanceof Error ? error.message : "unknown_error",
   });
