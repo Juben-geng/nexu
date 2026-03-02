@@ -123,7 +123,10 @@ describe("Artifact Internal Routes", () => {
     it("creates an artifact with minimal required fields", async () => {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({
           botId: "bot-test-1",
           title: "My Landing Page",
@@ -141,7 +144,10 @@ describe("Artifact Internal Routes", () => {
     it("creates an artifact with all deployment fields", async () => {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({
           botId: "bot-test-1",
           title: "Static Site Deploy",
@@ -175,7 +181,10 @@ describe("Artifact Internal Routes", () => {
     it("defaults status to building when not provided", async () => {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({ botId: "bot-test-1", title: "Draft" }),
       });
 
@@ -187,7 +196,10 @@ describe("Artifact Internal Routes", () => {
     it("returns 400 for unknown botId", async () => {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({
           botId: "bot-does-not-exist",
           title: "Test",
@@ -202,7 +214,10 @@ describe("Artifact Internal Routes", () => {
     it("returns 400 when botId is missing", async () => {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({ title: "No Bot" }),
       });
 
@@ -212,7 +227,10 @@ describe("Artifact Internal Routes", () => {
     it("returns 400 when title is missing", async () => {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({ botId: "bot-test-1" }),
       });
 
@@ -228,7 +246,10 @@ describe("Artifact Internal Routes", () => {
     async function createArtifact(overrides: Record<string, unknown> = {}) {
       const res = await app.request("/api/internal/artifacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({
           botId: "bot-test-1",
           title: "Build in Progress",
@@ -244,7 +265,10 @@ describe("Artifact Internal Routes", () => {
 
       const res = await app.request(`/api/internal/artifacts/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({
           status: "live",
           previewUrl: "https://done.nexu.space",
@@ -264,7 +288,10 @@ describe("Artifact Internal Routes", () => {
 
       const res = await app.request(`/api/internal/artifacts/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({ status: "failed" }),
       });
 
@@ -278,7 +305,10 @@ describe("Artifact Internal Routes", () => {
 
       const res = await app.request(`/api/internal/artifacts/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({
           metadata: { deploymentUrl: "https://abc123.nexu.pages.dev" },
         }),
@@ -294,7 +324,10 @@ describe("Artifact Internal Routes", () => {
     it("returns 404 for unknown artifact id", async () => {
       const res = await app.request("/api/internal/artifacts/nonexistent-id", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", "x-internal-token": TOKEN },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-token": TOKEN,
+        },
         body: JSON.stringify({ status: "live" }),
       });
 

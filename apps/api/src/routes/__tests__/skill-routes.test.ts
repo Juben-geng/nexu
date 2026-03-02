@@ -262,7 +262,9 @@ describe("Skill Routes", () => {
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as { skills: Record<string, Record<string, string>> };
+      const body = (await res.json()) as {
+        skills: Record<string, Record<string, string>>;
+      };
       expect(body.skills["hello-world"]).toEqual({
         "SKILL.md": "# Hello World",
       });
@@ -286,7 +288,9 @@ describe("Skill Routes", () => {
       });
 
       expect(res.status).toBe(200);
-      const body = (await res.json()) as { skills: Record<string, Record<string, string>> };
+      const body = (await res.json()) as {
+        skills: Record<string, Record<string, string>>;
+      };
       expect(body.skills["active-skill"]).toEqual({
         "SKILL.md": "active",
       });
