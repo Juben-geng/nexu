@@ -9,8 +9,8 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
-  Lock,
   Loader2,
+  Lock,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -177,7 +177,15 @@ export function SlackOAuthView({
       <div className={wrapperClass}>
         <div className="p-8 rounded-xl border bg-surface-1 border-border text-center">
           <div className="flex justify-center items-center w-12 h-12 rounded-xl bg-[#4A154B]/10 mx-auto mb-5">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#4A154B">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="#4A154B"
+              role="img"
+              aria-label="Slack logo"
+            >
+              <title>Slack logo</title>
               <path d={SLACK_LOGO_PATH} />
             </svg>
           </div>
@@ -193,7 +201,13 @@ export function SlackOAuthView({
             onClick={handleAddToSlack}
             className="flex gap-2 items-center justify-center mx-auto px-6 py-3 text-[13px] font-medium text-white rounded-lg bg-[#4A154B] hover:bg-[#3a1039] transition-all cursor-pointer"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="white"
+              aria-hidden="true"
+            >
               <path d={SLACK_LOGO_PATH} />
             </svg>
             Add to Slack
@@ -233,11 +247,13 @@ export function SlackOAuthView({
   return (
     <div className={manualWrapperClass}>
       {/* Error / info banner */}
-      <div className={`flex gap-3 items-start p-4 rounded-xl border mb-5 ${
-        oauthFailed
-          ? "bg-red-500/5 border-red-500/15"
-          : "bg-amber-500/5 border-amber-500/15"
-      }`}>
+      <div
+        className={`flex gap-3 items-start p-4 rounded-xl border mb-5 ${
+          oauthFailed
+            ? "bg-red-500/5 border-red-500/15"
+            : "bg-amber-500/5 border-amber-500/15"
+        }`}
+      >
         <AlertCircle
           size={16}
           className={`mt-0.5 shrink-0 ${oauthFailed ? "text-red-500" : "text-amber-500"}`}
@@ -250,8 +266,7 @@ export function SlackOAuthView({
             {oauthFailed
               ? oauthErrorMsg ||
                 "The automatic Slack authorization was not completed."
-              : "Enter your existing Slack App credentials below to connect manually."}
-            {" "}
+              : "Enter your existing Slack App credentials below to connect manually."}{" "}
             You can try OAuth again or use the manual flow below.
           </p>
           <button
@@ -356,7 +371,10 @@ export function SlackOAuthView({
           <div className="ml-11 space-y-4">
             <div>
               <div className="flex items-baseline gap-1.5 mb-1.5">
-                <label className="text-[12px] text-text-primary font-medium">
+                <label
+                  htmlFor="slack-bot-token"
+                  className="text-[12px] text-text-primary font-medium"
+                >
                   Bot User OAuth Token
                 </label>
                 <span className="text-[11px] text-text-muted">
@@ -368,6 +386,7 @@ export function SlackOAuthView({
               </div>
               <div className="relative">
                 <Input
+                  id="slack-bot-token"
                   type="password"
                   placeholder="xoxb-..."
                   value={botToken}
@@ -382,7 +401,10 @@ export function SlackOAuthView({
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1.5">
-                <label className="text-[12px] text-text-primary font-medium">
+                <label
+                  htmlFor="slack-signing-secret"
+                  className="text-[12px] text-text-primary font-medium"
+                >
                   Signing Secret
                 </label>
                 <span className="text-[11px] text-text-muted">
@@ -394,6 +416,7 @@ export function SlackOAuthView({
               </div>
               <div className="relative">
                 <Input
+                  id="slack-signing-secret"
                   type="password"
                   placeholder="a1bc2d3e4f5..."
                   value={signingSecret}
@@ -516,9 +539,7 @@ export function SlackOAuthView({
             <button
               type="button"
               onClick={handleManualConnect}
-              disabled={
-                connecting || !botToken.trim() || !signingSecret.trim()
-              }
+              disabled={connecting || !botToken.trim() || !signingSecret.trim()}
               className="flex gap-1.5 items-center px-5 py-2.5 text-[13px] font-medium text-white rounded-lg bg-[#4A154B] hover:bg-[#3a1039] transition-all disabled:opacity-60 cursor-pointer"
             >
               {connecting ? (

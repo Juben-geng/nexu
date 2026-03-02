@@ -331,7 +331,10 @@ export function DiscordSetupView({
           <div className="ml-11 space-y-4">
             <div>
               <div className="flex items-baseline gap-1.5 mb-1.5">
-                <label className="text-[12px] text-text-primary font-medium">
+                <label
+                  htmlFor="discord-app-id"
+                  className="text-[12px] text-text-primary font-medium"
+                >
                   Application ID
                 </label>
                 <span className="text-[11px] text-text-muted">
@@ -342,6 +345,7 @@ export function DiscordSetupView({
                 </span>
               </div>
               <Input
+                id="discord-app-id"
                 type="text"
                 placeholder="e.g. 1234567890123456789"
                 value={appId}
@@ -351,7 +355,10 @@ export function DiscordSetupView({
             </div>
             <div>
               <div className="flex items-baseline gap-1.5 mb-1.5">
-                <label className="text-[12px] text-text-primary font-medium">
+                <label
+                  htmlFor="discord-bot-token"
+                  className="text-[12px] text-text-primary font-medium"
+                >
                   Bot Token
                 </label>
                 <span className="text-[11px] text-text-muted">
@@ -364,6 +371,7 @@ export function DiscordSetupView({
               </div>
               <div className="relative">
                 <Input
+                  id="discord-bot-token"
                   type="password"
                   placeholder="e.g. MTxxxxxxxxxxxxxxxxxxxxxxx.xxxxxx"
                   value={botToken}

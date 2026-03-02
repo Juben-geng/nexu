@@ -1,6 +1,5 @@
 import { DiscordSetupView } from "@/components/channel-setup/discord-setup-view";
 import { SlackOAuthView } from "@/components/channel-setup/slack-oauth-view";
-import { identify, track } from "@/lib/tracking";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -51,9 +50,10 @@ export function ChannelsPage() {
   const [platform, setPlatform] = useState<Platform>("slack");
   const [forceGuide, setForceGuide] = useState(false);
 
-  // Auto-enter manual Slack flow when redirected from OAuth error
+  // Auto-enter manual Slack flow when redirected from OAuth error (run once on mount)
   const slackManual = searchParams.get("slackManual") === "true";
   const slackError = searchParams.get("slackError") || undefined;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally run once on mount to consume URL params
   useEffect(() => {
     if (slackManual || slackError) {
       setPlatform("slack");
@@ -63,7 +63,7 @@ export function ChannelsPage() {
       next.delete("slackError");
       setSearchParams(next, { replace: true });
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data: channelsData } = useQuery({
     queryKey: ["channels"],

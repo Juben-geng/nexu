@@ -73,9 +73,7 @@ export function SlackOAuthCallbackPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="mb-4 text-sm text-muted-foreground">
-              Redirecting...
-            </p>
+            <p className="mb-4 text-sm text-muted-foreground">Redirecting...</p>
             <Loader2 className="mx-auto h-5 w-5 animate-spin text-muted-foreground" />
           </CardContent>
         </Card>
