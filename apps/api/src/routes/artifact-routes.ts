@@ -74,14 +74,14 @@ async function resolveArtifactSessionKey(input: {
     return { error: "chatId must start with user: or channel:" };
   }
 
-  const channelId = rawChatId.slice("channel:".length).trim().toLowerCase();
+  const channelId = rawChatId.slice("channel:".length).trim();
   if (!channelId) {
     return { error: "chatId channel id is required" };
   }
 
   const conditions = [
     eq(sessions.botId, input.botId),
-    eq(sessions.channelId, channelId),
+    sql`lower(${sessions.channelId}) = ${channelId.toLowerCase()}`,
   ];
   const normalizedChannelType = input.channelType?.trim().toLowerCase();
   if (normalizedChannelType) {
