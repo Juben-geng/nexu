@@ -476,8 +476,8 @@ export default function DemoSection() {
       <div className="mx-auto max-w-4xl">
         <SlackDemo scenarioKey={activeDemo} />
         <div className="text-center mt-4 text-[12px] text-text-muted">
-          @Nexu in your favorite chat app — say what you need, get the result
-          delivered
+          The simplest OpenClaw - in Slack, Discord and Telegram. Always on,
+          always learning.
         </div>
       </div>
     </section>

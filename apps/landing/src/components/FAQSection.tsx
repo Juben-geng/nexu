@@ -27,28 +27,28 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 const FAQ_ITEMS = [
   {
-    q: "What can Nexu do for me?",
-    a: "Anything you can describe in a conversation: build websites and tools (auto-deployed and live), analyze data and generate reports, write blogs and newsletters, run scheduled automations, conduct competitive research, and more. Just say what you need in Slack / Discord / Telegram / WhatsApp, and your lobster delivers it.",
+    q: "What is nexu?",
+    a: "nexu is the simplest OpenClaw for teams - deploy in under a minute, with persistent memory and 1,000+ built-in tools. Always on in Slack, Discord and Telegram. Zero data loss, always learning.",
   },
   {
-    q: "How is this different from ChatGPT / Claude?",
-    a: "ChatGPT gives you answers. Nexu gives you results. The difference: 1) Your lobster lives in your IM — no extra window to open; 2) It doesn't just respond, it executes — code gets deployed, data analysis becomes a live dashboard; 3) It remembers your preferences — the more you use it, the smoother it gets; 4) It runs scheduled tasks automatically, without you having to watch.",
+    q: "How is nexu different from self-hosting OpenClaw?",
+    a: "nexu is hosted and ready in under a minute - no YAML, no server. You get persistent memory (OpenClaw sessions are stateless), 1,000+ tools out of the box, automatic updates, and team-level context across channels.",
   },
   {
-    q: "I don't know how to code. Can I still use it?",
-    a: 'Absolutely. Just say "build me a ___" and your lobster handles all the technical details. For example, "build my daughter a vocabulary game" — it writes the code, deploys it, and gives you a link. You never touch a single line of code.',
+    q: "Do I need to know how to code?",
+    a: "No. Just add nexu to your team chat and describe what you need - no code, no setup. Your AI runs with 1,000+ built-in tools and skills.",
   },
   {
-    q: "Which chat apps are supported?",
-    a: "Slack, Discord, Telegram, and WhatsApp. Each platform only needs a one-time bot setup — takes about 3 minutes. After that, 🦞 shows up in your group chats and DMs.",
+    q: "Which team chat platforms are supported?",
+    a: "Slack, Discord, and Telegram. Add the bot to your workspace or group - your AI joins in under a minute and is 24/7 next to your team.",
   },
   {
-    q: "Are the websites/tools it builds temporary?",
-    a: "No. Every project is deployed to a unique URL that you can share with anyone. Pro plan supports custom domains and permanent hosting.",
+    q: "How does nexu understand my team?",
+    a: "nexu has persistent memory and learns from everyday work chat. It understands you and your team over time - no repeating yourself. The more you use it, the sharper it gets.",
   },
   {
     q: "Is my data safe?",
-    a: "Every user's code and data is fully isolated, running in an independent sandbox environment. We never access or use your data.",
+    a: "Every user's code and data runs in a fully isolated cloud sandbox. We never access or use your data.",
   },
 ];
 

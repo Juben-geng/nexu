@@ -21,63 +21,52 @@ import LobsterCursorEffect from "../components/LobsterCursorEffect";
 import BrandMark from "../components/BrandMark.astro";
 
 const capabilities = [
-  { Icon: Rocket, label: "1-minute launch" },
-  { Icon: Brain, label: "Persistent memory" },
-  { Icon: Workflow, label: "1,000+ built-in tools" },
-  { Icon: MessageSquare, label: "Runs in team chat" },
-  { Icon: Clock, label: "24/7 execution" },
+  { Icon: Rocket, label: "Deploy in 1 min" },
+  { Icon: Workflow, label: "100% office tools & skills built-in" },
+  { Icon: Brain, label: "Zero data loss" },
+  { Icon: Clock, label: "Always on, 24/7" },
 ];
 
 const features = [
   {
-    Icon: Code2,
-    title: "Build & ship from chat",
-    desc: '"Build me a flashcard game for learning English" and your lobster writes the code, deploys it, and returns a live link.',
-  },
-  {
-    Icon: BarChart3,
-    title: "Analyze data in minutes",
-    desc: "Drop in a spreadsheet and your lobster finds trends, builds charts, and delivers recommendations with source notes.",
-  },
-  {
-    Icon: PenTool,
-    title: "Write content that ships",
-    desc: "Turn changelogs and meeting notes into launch posts, customer updates, and investor emails without switching tools.",
-  },
-  {
-    Icon: MessageSquare,
-    title: "Lives where your team talks",
-    desc: "No extra app to train. nexu runs directly in Slack, Discord, Telegram, and WhatsApp with one shared memory layer.",
+    Icon: Rocket,
+    title: "Deploy in 1 min",
+    desc: "No YAML, no config. Add nexu to your team chat and start working together right away.",
   },
   {
     Icon: Workflow,
-    title: "Automates recurring work",
-    desc: 'Set routines like "every Friday summarize Slack and send a newsletter" once, then let your lobster run them automatically.',
+    title: "100% office tools & skills built-in",
+    desc: "Build, analyze, automate - right from chat. No integrations to wire up, no plugins to install.",
   },
   {
     Icon: Brain,
-    title: "Compounds team context",
-    desc: "It remembers decisions, preferences, and project history so your team keeps momentum even when people rotate.",
+    title: "Zero data loss",
+    desc: "nexu remembers your conversations, preferences, and context. The more you use it, the sharper it gets.",
+  },
+  {
+    Icon: Clock,
+    title: "Always on, 24/7",
+    desc: "Fully hosted - no server to manage. Your AI is there whenever your team is.",
   },
 ];
 
 const steps = [
   {
     step: "01",
-    title: "Create workspace",
-    desc: "Start with email and name your workspace. You are ready in under a minute.",
-    Icon: Rocket,
-  },
-  {
-    step: "02",
-    title: "Connect team chat",
-    desc: "Add nexu to Slack, Discord, Telegram, or WhatsApp. Your lobster joins where work already happens.",
+    title: "Add to team chat",
+    desc: "Connect Slack, Discord, or Telegram. Your AI joins the channel in under a minute.",
     Icon: Blocks,
   },
   {
+    step: "02",
+    title: "Say what you need",
+    desc: "Just describe the task in chat - no code, no config. nexu handles the rest.",
+    Icon: MessageSquare,
+  },
+  {
     step: "03",
-    title: "Run real work",
-    desc: "Ask in plain language. nexu executes tasks, posts updates, and keeps memory for the next request.",
+    title: "24/7 next to you",
+    desc: "Your AI runs with persistent memory and 1,000+ built-in tools. Always available, never in the way.",
     Icon: Terminal,
   },
 ];
@@ -136,18 +125,14 @@ const useCases = [
 ];
 
 const stats = [
-  { num: "1 min", label: "To launch", sub: "Connect and go live" },
-  {
-    num: "24/7",
-    label: "Execution window",
-    sub: "Your lobster never sleeps",
-  },
+  { num: "24/7", label: "Always on", sub: "Your AI never sleeps" },
   {
     num: "1,000+",
     label: "Built-in tools",
-    sub: "Code, data, content, automation",
+    sub: "No integrations needed",
   },
-  { num: "0", label: "Ops overhead", sub: "Hosted by default" },
+  { num: "<1", label: "Minute to get started", sub: "No YAML, no setup" },
+  { num: "0", label: "Servers to manage", sub: "Fully hosted, auto-updated" },
 ];
 ---
 
@@ -172,8 +157,8 @@ const stats = [
         media.addListener(updateFavicon);
       })();
     </script>
-    <title>Nexu - Your team chat AI workspace</title>
-    <meta name="description" content="Turn team chat into execution. Launch in 1 minute, run 1,000+ built-in tools, and keep persistent memory in Slack, Discord, Telegram, and WhatsApp." />
+    <title>Nexu - The simplest OpenClaw for teams</title>
+    <meta name="description" content="The simplest OpenClaw in team chat - deploy in 1 minute, no YAML, no setup. 100% office tools and skills built-in, always on and always learning." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -190,10 +175,11 @@ const stats = [
             <span class="text-sm font-semibold tracking-tight text-text-primary">Nexu</span>
           </div>
           <div class="hidden md:flex items-center gap-6 text-[13px] text-text-tertiary">
-            <a href="#scenarios" class="transition-colors hover:text-text-primary">Scenarios</a>
-            <a href="#features" class="transition-colors hover:text-text-primary">Features</a>
-            <a href="#how" class="transition-colors hover:text-text-primary">How it works</a>
-            <a href="#faq" class="transition-colors hover:text-text-primary">FAQ</a>
+             <a href="#scenarios" class="transition-colors hover:text-text-primary">Demos</a>
+             <a href="#features" class="transition-colors hover:text-text-primary">Why Nexu</a>
+             <a href="#vs-openclaw" class="transition-colors hover:text-text-primary">VS OpenClaw</a>
+             <a href="#how" class="transition-colors hover:text-text-primary">How it works</a>
+             <a href="#faq" class="transition-colors hover:text-text-primary">FAQ</a>
           </div>
           <div class="flex items-center">
             <a href="/auth" class="px-3 sm:px-4 py-1.5 bg-accent hover:bg-accent-hover text-accent-fg rounded-md text-[12px] sm:text-[13px] font-medium transition-colors inline-flex items-center gap-1.5">
@@ -209,15 +195,15 @@ const stats = [
         <div class="absolute inset-0 opacity-15" style="background-image: linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px); background-size: 56px 56px;"></div>
         <div class="relative px-4 sm:px-6 pt-16 sm:pt-20 md:pt-24 pb-14 sm:pb-16 md:pb-20 mx-auto max-w-4xl text-center">
           <div class="inline-flex gap-2 items-center px-3 py-1 mb-8 text-xs font-medium rounded-full border border-accent/20 text-accent bg-accent/5">
-            <Zap size={12} /> Live beta · no setup tax
+            <Zap size={12} /> Free during beta
           </div>
           <h1 class="text-[32px] sm:text-[40px] md:text-[42px] font-bold text-text-primary mb-5 sm:mb-6 leading-[1.15] tracking-tight">
-            Your team chat just became your AI workspace<br />
-            <span class="text-accent">1-minute launch. Persistent team memory.</span>
+            The simplest OpenClaw🦞 for teams<br />
+            <span class="text-accent">Deploy in 1 min. Zero data loss.</span>
           </h1>
           <p class="mx-auto mb-7 sm:mb-8 max-w-2xl text-base sm:text-lg leading-relaxed text-text-tertiary">
-            nexu puts OpenClaw into the place your team already works: Slack, Discord, Telegram, and WhatsApp.<br class="hidden sm:block" />
-            No YAML, no context resets, no tool sprawl. Ask in chat and your lobster gets it done.
+            The simplest OpenClaw in team chat - deploy in 1 minute, no YAML, no setup.<br class="hidden sm:block" />
+            100% office tools and skills built-in, 24/7 next to you in Slack, Discord and Telegram. Always on, always learning.
           </p>
           <div class="flex flex-wrap gap-2 justify-center mb-10">
             {capabilities.map((cap) => (
@@ -233,7 +219,7 @@ const stats = [
             </a>
           </div>
           <div class="flex items-center justify-center text-[13px] text-text-muted">
-            <span>Built for teams that move fast and hate workflow fragmentation.</span>
+            <span>The simplest OpenClaw. Free to get started.</span>
           </div>
         </div>
       </section>
@@ -245,22 +231,11 @@ const stats = [
       <section id="features" class="px-4 sm:px-6 py-16 sm:py-20 md:py-24 mx-auto max-w-4xl">
         <div class="mb-14 text-center">
           <div class="text-[11px] font-semibold text-accent mb-3 tracking-widest uppercase">Capabilities</div>
-          <h2 class="text-2xl font-bold tracking-tight text-text-primary">OpenClaw power without OpenClaw friction.</h2>
-          <p class="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-text-tertiary">From task execution to reporting, nexu runs beside your team in chat with memory and production-ready defaults.</p>
+          <h2 class="text-2xl font-bold tracking-tight text-text-primary">The simplest OpenClaw. Built for your team.</h2>
+          <p class="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-text-tertiary">The simplest OpenClaw - ready in under a minute, with persistent memory and every tool your team needs. Always on in Slack, Discord and Telegram.</p>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-5 lg:mb-10">
-          {features.slice(0, 3).map((f) => (
-            <div class="p-6 rounded-xl border transition-colors bg-surface-1 border-border hover:border-border-hover group">
-              <div class="flex justify-center items-center w-10 h-10 rounded-xl bg-accent/10 mb-4">
-                <f.Icon size={20} className="text-accent" />
-              </div>
-              <div class="text-[14px] font-semibold text-text-primary mb-2">{f.title}</div>
-              <div class="text-[13px] text-text-muted leading-relaxed">{f.desc}</div>
-            </div>
-          ))}
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.slice(3).map((f) => (
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {features.map((f) => (
             <div class="p-6 rounded-xl border transition-colors bg-surface-1 border-border hover:border-border-hover group">
               <div class="flex justify-center items-center w-10 h-10 rounded-xl bg-accent/10 mb-4">
                 <f.Icon size={20} className="text-accent" />
@@ -274,11 +249,65 @@ const stats = [
 
       <div class="px-4 sm:px-6 mx-auto max-w-4xl"><div class="border-t border-border"></div></div>
 
+      {/* VS OpenClaw */}
+      <section id="vs-openclaw" class="px-4 sm:px-6 py-16 sm:py-20 md:py-24 mx-auto max-w-4xl">
+        <div class="mb-14 text-center">
+          <div class="text-[11px] font-semibold text-accent mb-3 tracking-widest uppercase">Compare</div>
+          <h2 class="text-2xl font-bold tracking-tight text-text-primary">How nexu stacks up</h2>
+          <p class="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-text-tertiary">Compared to self-hosting OpenClaw and other hosted options.</p>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-border bg-surface-1">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-border">
+                <th class="px-5 py-4 font-semibold text-text-primary">Feature</th>
+                <th class="px-5 py-4 font-semibold text-accent">nexu</th>
+                <th class="px-5 py-4 font-semibold text-text-secondary">OpenClaw (Self-Hosted)</th>
+              </tr>
+            </thead>
+            <tbody class="text-text-secondary">
+              <tr class="border-b border-border">
+                <td class="px-5 py-3 font-medium text-text-primary">Setup / Deploy</td>
+                <td class="px-5 py-3">Under 1 minute, no code needed</td>
+                <td class="px-5 py-3">&gt;24 h (YAML / env / keys)</td>
+              </tr>
+              <tr class="border-b border-border">
+                <td class="px-5 py-3 font-medium text-text-primary">Data & memory</td>
+                <td class="px-5 py-3">Persistent - zero data loss, learns your team</td>
+                <td class="px-5 py-3">Session stateless, no persistent learning</td>
+              </tr>
+              <tr class="border-b border-border">
+                <td class="px-5 py-3 font-medium text-text-primary">Tools & skills</td>
+                <td class="px-5 py-3">1,000+ built in, out of the box</td>
+                <td class="px-5 py-3">You build or plug in integrations</td>
+              </tr>
+              <tr class="border-b border-border">
+                <td class="px-5 py-3 font-medium text-text-primary">IM platforms</td>
+                <td class="px-5 py-3">Slack, Discord, Telegram</td>
+                <td class="px-5 py-3">You build integrations</td>
+              </tr>
+              <tr class="border-b border-border">
+                <td class="px-5 py-3 font-medium text-text-primary">Hosting</td>
+                <td class="px-5 py-3">Fully hosted, 24/7</td>
+                <td class="px-5 py-3">Self-hosted, uptime depends on you</td>
+              </tr>
+              <tr>
+                <td class="px-5 py-3 font-medium text-text-primary">Updates</td>
+                <td class="px-5 py-3">Automatic</td>
+                <td class="px-5 py-3">Manual pull / upgrade</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="px-4 sm:px-6 mx-auto max-w-4xl"><div class="border-t border-border"></div></div>
+
       {/* How it works */}
       <section id="how" class="px-4 sm:px-6 py-16 sm:py-20 md:py-24 mx-auto max-w-4xl">
         <div class="mb-14 text-center">
           <div class="text-[11px] font-semibold text-accent mb-3 tracking-widest uppercase">How it works</div>
-          <h2 class="text-2xl font-bold tracking-tight text-text-primary">Go from zero to daily value in 3 steps.</h2>
+          <h2 class="text-2xl font-bold tracking-tight text-text-primary">Get your OpenClaw in 3 quick steps</h2>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
           {steps.map((s, i) => (
@@ -349,7 +378,7 @@ const stats = [
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(var(--color-accent-rgb,99,102,241),0.05)_0%,transparent_60%)]"></div>
         <div class="relative px-4 sm:px-6 py-16 sm:py-20 md:py-24 mx-auto max-w-3xl text-center">
           <h2 class="mb-4 text-3xl font-bold tracking-tight text-text-primary">Give your lobster a real workplace.</h2>
-          <p class="mb-8 text-base text-text-tertiary">Start free, connect your channels, and turn daily chat into reusable team leverage.</p>
+          <p class="mb-8 text-base text-text-tertiary">The simplest OpenClaw. Always on, always learning.</p>
           <div class="flex gap-3 justify-center">
             <a href="/auth" class="flex gap-2 items-center px-6 sm:px-8 py-3 text-sm font-semibold rounded-lg transition-all bg-accent hover:bg-accent-hover text-accent-fg hover:shadow-lg hover:shadow-accent/20">
               Get started free <ArrowRight size={14} />
