@@ -33,7 +33,9 @@ const __dirname = dirname(__filename);
 const electronRoot = app.isPackaged
   ? process.resourcesPath
   : getDesktopAppRoot();
-const runtimeConfig = getDesktopRuntimeConfig(process.env);
+const runtimeConfig = getDesktopRuntimeConfig(process.env, {
+  resourcesPath: electronRoot,
+});
 const orchestrator = new RuntimeOrchestrator(
   createRuntimeUnitManifests(
     electronRoot,
