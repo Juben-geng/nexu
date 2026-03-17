@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -16,6 +17,23 @@ import {
 } from "../../shared/runtime-config";
 import { getWorkspaceRoot } from "../../shared/workspace-paths";
 import type { RuntimeUnitManifest } from "./types";
+
+/**
+ * Returns a stable 32-byte hex encryption key for the desktop API sidecar.
+ * Generated once and persisted to disk so encrypted data survives restarts.
+ */
+function ensureEncryptionKey(runtimeRoot: string): string {
+  const keyPath = path.resolve(runtimeRoot, ".encryption-key");
+  try {
+    const existing = readFileSync(keyPath, "utf8").trim();
+    if (/^[0-9a-f]{64}$/i.test(existing)) return existing;
+  } catch {
+    // Generate new key
+  }
+  const key = randomBytes(32).toString("hex");
+  writeFileSync(keyPath, key, { mode: 0o600 });
+  return key;
+}
 
 function ensureDir(path: string): string {
   mkdirSync(path, { recursive: true });
@@ -236,6 +254,7 @@ export function createRuntimeUnitManifests(
         WEB_URL: webUrl,
         INTERNAL_API_TOKEN: internalApiToken,
         SKILL_API_TOKEN: skillApiToken,
+        ENCRYPTION_KEY: ensureEncryptionKey(runtimeRoot),
         NEXU_DESKTOP_MODE: "true",
         NEXU_CLOUD_URL: runtimeConfig.urls.nexuCloud,
         ...(runtimeConfig.urls.nexuLink

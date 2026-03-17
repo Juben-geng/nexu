@@ -122,7 +122,9 @@ export function registerIpcHandlers(
         }
 
         case "env:get-api-base-url": {
-          const apiBaseUrl = getDesktopRuntimeConfig(process.env).urls.apiBase;
+          const apiBaseUrl = getDesktopRuntimeConfig(process.env, {
+            resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
+          }).urls.apiBase;
 
           const result: HostInvokeResultMap["env:get-api-base-url"] = {
             apiBaseUrl,
@@ -132,7 +134,9 @@ export function registerIpcHandlers(
         }
 
         case "env:get-runtime-config": {
-          return getDesktopRuntimeConfig(process.env);
+          return getDesktopRuntimeConfig(process.env, {
+            resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
+          });
         }
 
         case "runtime:get-state": {

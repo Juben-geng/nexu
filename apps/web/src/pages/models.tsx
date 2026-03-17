@@ -626,29 +626,6 @@ export function ModelsPage() {
     [searchParams, setSearchParams],
   );
 
-  if (modelsLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-[13px] text-text-muted">{t("models.loading")}</div>
-      </div>
-    );
-  }
-
-  if (modelsError) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="text-[13px] text-red-500 mb-2">
-            {t("models.loadFailed")}
-          </div>
-          <p className="text-[12px] text-text-muted">
-            {t("models.loadFailedHint")}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
@@ -778,19 +755,50 @@ export function ModelsPage() {
             <div className="flex-1 overflow-y-auto p-5">
               {activeProvider ? (
                 activeProvider.managed ? (
-                  <ManagedProviderDetail
-                    provider={
-                      providers.find((p) => p.id === activeProvider.id) ?? {
-                        id: activeProvider.id,
-                        name: activeProvider.name,
-                        description:
-                          PROVIDER_META[activeProvider.id]?.descriptionKey ??
-                          "",
-                        managed: true,
-                        models: [],
+                  modelsLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-[13px] text-text-muted">
+                        {t("models.loading")}
+                      </div>
+                    </div>
+                  ) : modelsError ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center">
+                        <div className="text-[13px] text-red-500 mb-2">
+                          {t("models.loadFailed")}
+                        </div>
+                        <p className="text-[12px] text-text-muted mb-3">
+                          {t("models.loadFailedHint")}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            queryClient.invalidateQueries({
+                              queryKey: ["models"],
+                            })
+                          }
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-surface-2 hover:bg-surface-3 text-text-primary transition-colors"
+                        >
+                          <RefreshCw size={12} />
+                          {t("models.retry")}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <ManagedProviderDetail
+                      provider={
+                        providers.find((p) => p.id === activeProvider.id) ?? {
+                          id: activeProvider.id,
+                          name: activeProvider.name,
+                          description:
+                            PROVIDER_META[activeProvider.id]?.descriptionKey ??
+                            "",
+                          managed: true,
+                          models: [],
+                        }
                       }
-                    }
-                  />
+                    />
+                  )
                 ) : (
                   <ByokProviderDetail
                     providerId={activeProvider.id}

@@ -199,6 +199,7 @@ const en = {
     "You are helping shape the desktop and workspace experience.",
   "settings.general.githubStarredBadge": "Starred",
   "models.loading": "Loading models...",
+  "models.retry": "Retry",
   "models.loadFailed": "Failed to load models",
   "models.loadFailedHint":
     "Check that you are logged in and the API server is running.",

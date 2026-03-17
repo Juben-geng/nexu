@@ -193,6 +193,7 @@ const zhCN = {
   "settings.general.githubStarredBody": "你正在帮助塑造桌面端和工作区体验。",
   "settings.general.githubStarredBadge": "已 Star",
   "models.loading": "正在加载模型...",
+  "models.retry": "重试",
   "models.loadFailed": "加载模型失败",
   "models.loadFailedHint": "请确认你已登录且 API 服务正在运行。",
   "models.selectProvider": "选择一个服务商",

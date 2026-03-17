@@ -50,6 +50,12 @@ const orchestrator = new RuntimeOrchestrator(
 
 app.setName("Nexu Desktop");
 
+// Disable Chromium's popup blocker.  window.open() inside webviews can lose
+// "transient user activation" after async work (fetch → response → open),
+// causing silent popup blocking.  All popups are already caught by
+// setWindowOpenHandler and redirected to shell.openExternal, so this is safe.
+app.commandLine.appendSwitch("disable-popup-blocking");
+
 const sentryDsn = runtimeConfig.sentryDsn;
 
 if (sentryDsn) {

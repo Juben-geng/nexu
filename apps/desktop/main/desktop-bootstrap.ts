@@ -1,10 +1,12 @@
-import { session } from "electron";
+import { app, session } from "electron";
 import { getDesktopRuntimeConfig } from "../shared/runtime-config";
 import { parseSetCookieHeader } from "./cookies";
 
 type PgPoolConstructor = typeof import("pg").Pool;
 
-const runtimeConfig = getDesktopRuntimeConfig(process.env);
+const runtimeConfig = getDesktopRuntimeConfig(process.env, {
+  resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
+});
 
 export const desktopApiUrl = runtimeConfig.urls.apiBase;
 export const desktopWebUrl = runtimeConfig.urls.web;

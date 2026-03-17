@@ -123,6 +123,42 @@ body,
   cursor: not-allowed;
 }
 
+.desktop-sidebar-config {
+  margin-top: auto;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.desktop-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+
+.desktop-config-list div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.desktop-config-list dt {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.desktop-config-list dd {
+  margin: 0;
+  font-size: 0.72rem;
+  font-family: "SF Mono", ui-monospace, monospace;
+  color: rgba(255, 255, 255, 0.75);
+  word-break: break-all;
+}
+
 .desktop-nav-item:not(:disabled):hover {
   border-color: rgba(139, 167, 255, 0.34);
   transform: translateY(-1px);
