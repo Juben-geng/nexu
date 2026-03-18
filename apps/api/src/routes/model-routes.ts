@@ -110,7 +110,11 @@ export function registerModelRoutes(app: OpenAPIHono<AppBindings>) {
   app.openapi(listModelsRoute, async (c) => {
     const cloudModels = getCloudModels();
     const byokModels = await getByokModels();
-    const models = [...PLATFORM_MODELS, ...cloudModels, ...byokModels];
+    // Desktop mode: only use cloud + BYOK models (no hardcoded platform models)
+    // Web mode: use platform models + BYOK
+    const isDesktop = process.env.NEXU_DESKTOP_MODE === "true";
+    const baseModels = isDesktop ? cloudModels : PLATFORM_MODELS;
+    const models = [...baseModels, ...byokModels];
     return c.json({ models }, 200);
   });
 
