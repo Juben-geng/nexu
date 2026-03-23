@@ -1,20 +1,21 @@
 import { authClient } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 export function AuthLayout() {
-  const { data: session, isPending } = authClient.useSession();
+  const location = useLocation();
+  const { data: session, isPending: authPending } = authClient.useSession();
 
-  if (isPending) {
+  if (authPending) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-text-muted" />
       </div>
     );
   }
 
   if (!session?.user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/" replace state={{ from: location }} />;
   }
 
   return <Outlet />;
