@@ -11,6 +11,82 @@ export function createTriagePlan() {
   };
 }
 
+function buildTranslationComment({ englishTitle, englishBody }) {
+  const maxCommentLength = 65_500;
+  const truncationMarker = "… [truncated]";
+  const title = typeof englishTitle === "string" ? englishTitle.trim() : "";
+  const body = typeof englishBody === "string" ? englishBody.trim() : "";
+
+  const buildComment = ({ titleText, bodyText }) =>
+    [
+      "# AI Translation:",
+      "",
+      "---",
+      "",
+      "**Title:**",
+      "",
+      titleText,
+      "",
+      "**Body:**",
+      "",
+      bodyText,
+    ].join("\n");
+
+  const withMarker = (text, maxLength) => {
+    if (maxLength <= 0) {
+      return "";
+    }
+
+    if (text.length <= maxLength) {
+      return text;
+    }
+
+    if (maxLength <= truncationMarker.length) {
+      return truncationMarker.slice(0, maxLength);
+    }
+
+    return `${text.slice(0, maxLength - truncationMarker.length).trimEnd()}${truncationMarker}`;
+  };
+
+  const fullComment = buildComment({ titleText: title, bodyText: body });
+  if (fullComment.length <= maxCommentLength) {
+    return fullComment;
+  }
+
+  const maxBodyLength = Math.max(
+    0,
+    body.length - (fullComment.length - maxCommentLength),
+  );
+  const truncatedBody = withMarker(body, maxBodyLength);
+  const commentWithTrimmedBody = buildComment({
+    titleText: title,
+    bodyText: truncatedBody,
+  });
+
+  if (commentWithTrimmedBody.length <= maxCommentLength) {
+    return commentWithTrimmedBody;
+  }
+
+  const commentWithoutBody = buildComment({
+    titleText: title,
+    bodyText: truncationMarker,
+  });
+  if (commentWithoutBody.length <= maxCommentLength) {
+    return commentWithoutBody;
+  }
+
+  const titleAllowance = Math.max(
+    0,
+    maxCommentLength -
+      buildComment({ titleText: "", bodyText: truncationMarker }).length,
+  );
+
+  return buildComment({
+    titleText: withMarker(title, titleAllowance),
+    bodyText: truncationMarker,
+  });
+}
+
 function toOrderedUniqueStrings(values) {
   if (!Array.isArray(values)) {
     return [];
@@ -191,6 +267,25 @@ export async function buildOpenedIssueTriagePlan({
 
     englishTitle = hasTitle ? translation.translated_title : issueTitle;
     englishBody = hasBody ? translation.translated_body : issueBody;
+
+    if (hasTitle || hasBody) {
+      const detectedLanguage =
+        typeof translation.detected_language === "string" &&
+        translation.detected_language.trim() !== ""
+          ? translation.detected_language.trim()
+          : "non-English";
+
+      plan.commentsToAdd.push(
+        buildTranslationComment({
+          englishTitle,
+          englishBody,
+        }),
+      );
+      plan.labelsToAdd.push("ai-translated");
+      plan.diagnostics.push(
+        `translation comment prepared for ${detectedLanguage} issue`,
+      );
+    }
 
     if (!(hasTitle || hasBody)) {
       plan.diagnostics.push(

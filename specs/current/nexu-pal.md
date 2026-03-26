@@ -18,7 +18,7 @@ Runs in order:
 
 1. **First-time contributor welcome** — Uses `actions/first-interaction@v3`. If the author has never opened an issue in this repo before, posts a welcome comment.
 
-2. **Language detection & translation** — Sends the issue title and body to an LLM (`google/gemini-2.5-flash` via OpenRouter). If the content is primarily non-English, uses the English translation internally for downstream classification.
+2. **Language detection & translation** — Sends the issue title and body to an LLM (`google/gemini-2.5-flash` via OpenRouter). If the content is primarily non-English, posts a comment with the English translation, adds the `ai-translated` label, and uses the English translation internally for downstream classification.
 
 3. **Intent classification** — Sends the normalized English title and body to the LLM and assigns only the `bug` label when the issue clearly describes broken behavior.
 
@@ -67,6 +67,7 @@ The legacy issue/discussion workflows continue to run `node scripts/notify/feish
 
 | Label | Added when | Removed when |
 |-------|-----------|--------------|
+| `ai-translated` | Non-English issue detected and translated into a public comment | — |
 | `bug` | LLM classifies as bug | — |
 | `needs-information` | LLM determines the issue is too incomplete to continue triage | `/triage *` terminal transitions for manual override; automatic re-entry is not implemented yet |
 | `needs-triage` | Issue opened, not roadmap-matched, and complete enough for manual triage | `/triage *` terminal transitions |
